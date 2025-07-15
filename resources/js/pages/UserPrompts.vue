@@ -97,23 +97,21 @@ onMounted(() => {
         </div>
 
         <div class="flex flex-col gap-2" v-if="prompts.length > 0">
-            <Table>
+            <Table class="overflow-hidden">
                 <TableHeader>
                     <TableRow>
-                        <TableHead class="w-[100px]">
-                            Name
-                        </TableHead>
+                        <TableHead>Name</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead>Link</TableHead>
-                        <TableHead class="text-right">
-                            Actions
-                        </TableHead>
+                        <TableHead class="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     <TableRow v-for="prompt in prompts" :key="prompt.uuid">
                         <TableCell class="font-medium">{{ prompt.name }}</TableCell>
-                        <TableCell>{{ prompt.description }}</TableCell>
+                        <TableCell class="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
+                            {{ prompt.description }}
+                        </TableCell>
                         <TableCell>
                             {{ route('api.generate-with-ai', { prompt: prompt.uuid }) }}
                         </TableCell>
