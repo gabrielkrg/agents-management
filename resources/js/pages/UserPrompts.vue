@@ -85,7 +85,7 @@ onMounted(() => {
     <div class="flex flex-col gap-2">
         <div class="flex justify-between">
             <div class="flex flex-col">
-                <h3 class="text-xl font-bold">User Prompts</h3>
+                <h3 class="text-xl font-bold">Prompts</h3>
                 <p class="text-sm text-gray-500">
                     Manage your user prompts here
                 </p>

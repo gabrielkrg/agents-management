@@ -61,7 +61,7 @@ onMounted(() => {
     <div class="flex flex-col gap-2">
         <div class="flex justify-between">
             <div class="flex flex-col">
-                <h3 class="text-xl font-bold">User Tokens</h3>
+                <h3 class="text-xl font-bold">Tokens</h3>
                 <p class="text-sm text-gray-500">
                     Manage your user tokens here
                 </p>
