@@ -19,6 +19,16 @@ import {
     TableRow,
 } from '@/components/ui/table'
 
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -31,12 +41,20 @@ import { router } from '@inertiajs/vue3'
 import axios from 'axios'
 
 const prompts = ref([]);
-
 const isOpen = ref(false)
+
+const placeholderJsonSchema = `{
+   "name": { "type": "STRING" },
+    "ingredients": {
+        "type": "ARRAY",
+        "items": { "type": "STRING" }
+    }
+}`;
 
 const formPrompt = useForm({
     name: '',
     description: '',
+    json_schema: null
 })
 
 const submitPrompt = () => {
@@ -52,11 +70,13 @@ const submitPrompt = () => {
 const editPrompt = (prompt: any) => {
     editPromptForm.name = prompt.name
     editPromptForm.description = prompt.description
+    editPromptForm.json_schema = prompt.json_schema
 }
 
 const editPromptForm = useForm({
     name: '',
     description: '',
+    json_schema: null
 })
 
 const updatePrompt = (uuid: string) => {
@@ -144,6 +164,19 @@ onMounted(() => {
                                                 <Textarea id="description" v-model="editPromptForm.description"
                                                     class="col-span-3" />
                                             </div>
+                                            <div class="grid grid-cols-4 items-center gap-4">
+                                                <Label for="json_schema" class="text-right">
+                                                    JSON Schema
+                                                </Label>
+                                                <div class="col-span-3">
+                                                    <Textarea id="json_schema" v-model="editPromptForm.json_schema"
+                                                        type="json" :placeholder="placeholderJsonSchema" />
+                                                    <span class="text-red-500 text-xs text-right">
+                                                        Let it be null if you want a plain text response.
+                                                    </span>
+
+                                                </div>
+                                            </div>
                                         </div>
                                         <DialogFooter>
                                             <DialogClose>
@@ -187,7 +220,7 @@ onMounted(() => {
     </div>
 
     <Dialog v-model:open="isOpen">
-        <DialogContent class="sm:max-w-[425px]">
+        <DialogContent class="sm:max-w-[600px]">
             <form @submit.prevent="submitPrompt">
                 <DialogHeader>
                     <DialogTitle>Add Prompt</DialogTitle>
@@ -207,6 +240,18 @@ onMounted(() => {
                             Description
                         </Label>
                         <Textarea id="description" v-model="formPrompt.description" class="col-span-3" />
+                    </div>
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <Label for="description" class="text-right">
+                            JSON Schema
+                        </Label>
+                        <div class="col-span-3">
+                            <Textarea id="json_schema" v-model="formPrompt.json_schema" type="json"
+                                :placeholder="placeholderJsonSchema" />
+                            <span class="text-red-500 text-xs text-right">
+                                Let it be null if you want a plain text response.
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <DialogFooter>

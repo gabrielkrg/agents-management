@@ -17,5 +17,10 @@ class Prompt extends Model
         'name',
         'description',
         'user_id',
+        'json_schema',
+    ];
+
+    protected $casts = [
+        'json_schema' => 'array',
     ];
 }

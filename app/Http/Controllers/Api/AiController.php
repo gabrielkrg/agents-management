@@ -15,10 +15,7 @@ class AiController extends Controller
             'content' => 'required|string:max:1000',
         ]);
 
-        $response = Http::withHeaders([
-            'x-goog-api-key' => env('GEMINI_API_KEY'),
-            'Content-Type' => 'application/json',
-        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', [
+        $requestData = [
             'system_instruction' => [
                 'parts' => [
                     [
@@ -34,22 +31,29 @@ class AiController extends Controller
                         ]
                     ]
                 ]
-            ],
-            'generation_config' => [
+            ]
+        ];
+
+        if ($prompt->json_schema) {
+            $json_schema_config = [
                 'response_mime_type' => 'application/json',
                 'response_schema' => [
                     'type' => 'ARRAY',
                     'items' => [
                         'type' => 'OBJECT',
-                        'properties' => [
-                            'name' => ['type' => 'STRING'],
-                            'description' => ['type' => 'STRING']
-                        ],
-                        'propertyOrdering' => ['name', 'description']
+                        'properties' => json_decode($prompt->json_schema, true),
+                        'propertyOrdering' => array_keys(json_decode($prompt->json_schema, true))
                     ]
                 ]
-            ]
-        ]);
+            ];
+
+            $requestData['generation_config'] = $json_schema_config;
+        }
+
+        $response = Http::withHeaders([
+            'x-goog-api-key' => env('GEMINI_API_KEY'),
+            'Content-Type' => 'application/json',
+        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', $requestData);
 
         $responseData = $response['candidates'][0]['content']['parts'][0]['text'];
         $parsedData = json_decode($responseData, true);

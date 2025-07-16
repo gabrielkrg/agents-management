@@ -19,7 +19,8 @@ class PromptController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'required|string|max:255',
+            'description' => 'required|string|max:1000',
+            'json_schema' => 'nullable|json',
         ]);
 
         Prompt::create(array_merge($validated, [
@@ -34,6 +35,7 @@ class PromptController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:1000',
+            'json_schema' => 'nullable|json',
         ]);
 
         $prompt->update($validated);
