@@ -15,49 +15,45 @@ class AiController extends Controller
             'content' => 'required|string:max:1000',
         ]);
 
-        try {
-            $response = Http::withHeaders([
-                'x-goog-api-key' => env('GEMINI_API_KEY'),
-                'Content-Type' => 'application/json',
-            ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', [
-                'system_instruction' => [
+        $response = Http::withHeaders([
+            'x-goog-api-key' => env('GEMINI_API_KEY'),
+            'Content-Type' => 'application/json',
+        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', [
+            'system_instruction' => [
+                'parts' => [
+                    [
+                        'text' => $prompt->description
+                    ]
+                ]
+            ],
+            'contents' => [
+                [
                     'parts' => [
                         [
-                            'text' => $prompt->description
-                        ]
-                    ]
-                ],
-                'contents' => [
-                    [
-                        'parts' => [
-                            [
-                                'text' => $request->content
-                            ]
-                        ]
-                    ]
-                ],
-                'generation_config' => [
-                    'response_mime_type' => 'application/json',
-                    'response_schema' => [
-                        'type' => 'ARRAY',
-                        'items' => [
-                            'type' => 'OBJECT',
-                            'properties' => [
-                                'name' => ['type' => 'STRING'],
-                                'description' => ['type' => 'STRING']
-                            ],
-                            'propertyOrdering' => ['name', 'description']
+                            'text' => $request->content
                         ]
                     ]
                 ]
-            ]);
+            ],
+            'generation_config' => [
+                'response_mime_type' => 'application/json',
+                'response_schema' => [
+                    'type' => 'ARRAY',
+                    'items' => [
+                        'type' => 'OBJECT',
+                        'properties' => [
+                            'name' => ['type' => 'STRING'],
+                            'description' => ['type' => 'STRING']
+                        ],
+                        'propertyOrdering' => ['name', 'description']
+                    ]
+                ]
+            ]
+        ]);
 
-            $responseData = $response['candidates'][0]['content']['parts'][0]['text'];
-            $parsedData = json_decode($responseData, true);
+        $responseData = $response['candidates'][0]['content']['parts'][0]['text'];
+        $parsedData = json_decode($responseData, true);
 
-            return response()->json($parsedData);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        return response()->json($parsedData);
     }
 }
