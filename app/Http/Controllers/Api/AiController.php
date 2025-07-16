@@ -45,6 +45,15 @@ class AiController extends Controller
             ]
         ]);
 
+        if ($request->debug) {
+            return response()->json([
+                'message' => 'debug',
+                'prompt' => $prompt->description,
+                'data' => $request->content,
+                'response' => $response->json(),
+            ]);
+        }
+
         $responseData = $response->json();
         $aiResponse = $responseData['candidates'][0]['content']['parts'][0]['text'];
 
