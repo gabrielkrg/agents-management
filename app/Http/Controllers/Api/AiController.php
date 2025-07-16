@@ -15,18 +15,10 @@ class AiController extends Controller
             'content' => 'required|string:max:1000',
         ]);
 
-        if ($request->debug) {
-            return response()->json([
-                'message' => 'debug',
-                'prompt' => $prompt->description,
-                'data' => $request->content,
-            ]);
-        }
-
         $response = Http::withHeaders([
             'x-goog-api-key' => env('GEMINI_API_KEY'),
             'Content-Type' => 'application/json',
-        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', [
+        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', [
             'system_instruction' => [
                 'parts' => [
                     [
@@ -42,26 +34,26 @@ class AiController extends Controller
                         ]
                     ]
                 ]
+            ],
+            'generation_config' => [
+                'response_mime_type' => 'application/json',
+                'response_schema' => [
+                    'type' => 'ARRAY',
+                    'items' => [
+                        'type' => 'OBJECT',
+                        'properties' => [
+                            'name' => ['type' => 'STRING'],
+                            'description' => ['type' => 'STRING']
+                        ],
+                        'propertyOrdering' => ['name', 'description']
+                    ]
+                ]
             ]
         ]);
-
-        if ($request->debug) {
-            return response()->json([
-                'message' => 'debug',
-                'prompt' => $prompt->description,
-                'data' => $request->content,
-                'response' => $response,
-            ]);
-        }
 
         $responseData = $response->json();
         $aiResponse = $responseData['candidates'][0]['content']['parts'][0]['text'];
 
-        // return response()->json($aiResponse);
-
-        $jsonString = preg_replace('/```json\s*|\s*```/', '', $aiResponse);
-        $parsedData = json_decode($jsonString, true);
-
-        return response()->json($parsedData);
+        return response()->json($aiResponse);
     }
 }
