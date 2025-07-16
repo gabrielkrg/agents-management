@@ -52,7 +52,7 @@ class AiController extends Controller
         ]);
 
         $responseData = $response->json();
-        $aiResponse = json_decode($responseData['candidates'][0]['content']['parts'][0]['text'], true);
+        $aiResponse = $responseData['candidates'][0]['content']['parts'][0]['text'];
 
         return response()->json($aiResponse);
     }
