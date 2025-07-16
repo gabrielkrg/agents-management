@@ -26,7 +26,7 @@ class AiController extends Controller
         $response = Http::withHeaders([
             'x-goog-api-key' => env('GEMINI_API_KEY'),
             'Content-Type' => 'application/json',
-        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', [
+        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', [
             'system_instruction' => [
                 'parts' => [
                     [
@@ -50,7 +50,7 @@ class AiController extends Controller
                 'message' => 'debug',
                 'prompt' => $prompt->description,
                 'data' => $request->content,
-                'response' => $response->json(),
+                'response' => $response,
             ]);
         }
 
