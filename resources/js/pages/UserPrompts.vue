@@ -19,29 +19,29 @@ import {
     TableRow,
 } from '@/components/ui/table'
 
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
-
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useForm } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Pencil, Trash2 } from 'lucide-vue-next';
+import { Skeleton } from '@/components/ui/skeleton'
 
 import { ref, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3'
 import axios from 'axios'
 
-const prompts = ref([]);
+interface Prompt {
+    uuid: string;
+    name: string;
+    description: string;
+    json_schema: string | null;
+}
+
+const prompts = ref<Prompt[]>([]);
+const isLoading = ref(true)
 const isOpen = ref(false)
+const isOpenEdit = ref(false)
 
 const placeholderJsonSchema = `{
    "name": { "type": "STRING" },
@@ -54,20 +54,35 @@ const placeholderJsonSchema = `{
 const formPrompt = useForm({
     name: '',
     description: '',
-    json_schema: null
+    json_schema: ''
 })
+
+// Function to load prompts
+const loadPrompts = async () => {
+    isLoading.value = true
+    try {
+        const response = await axios.get(route('prompts.index'))
+        prompts.value = response.data
+    } catch (error) {
+        console.error('Error loading prompts:', error)
+    } finally {
+        isLoading.value = false
+    }
+}
 
 const submitPrompt = () => {
     formPrompt.post(route('prompts.store'), {
         onSuccess: () => {
             isOpen.value = false
             formPrompt.reset()
+            // Refresh the prompts list after creating
+            loadPrompts()
         }
     })
 }
 
-
 const editPrompt = (prompt: any) => {
+    isOpenEdit.value = true
     editPromptForm.name = prompt.name
     editPromptForm.description = prompt.description
     editPromptForm.json_schema = prompt.json_schema
@@ -76,13 +91,19 @@ const editPrompt = (prompt: any) => {
 const editPromptForm = useForm({
     name: '',
     description: '',
-    json_schema: null
+    json_schema: '',
 })
 
 const updatePrompt = (uuid: string) => {
     editPromptForm.put(route('prompts.update', { prompt: uuid }), {
         onSuccess: () => {
             editPromptForm.reset()
+            isOpenEdit.value = false
+            // Refresh the prompts list after updating
+            loadPrompts()
+        },
+        onError: (errors) => {
+            console.log(errors)
         }
     })
 }
@@ -90,23 +111,25 @@ const updatePrompt = (uuid: string) => {
 const deletePrompt = (uuid: string) => {
     router.delete(route('prompts.destroy', { prompt: uuid }), {
         onSuccess: () => {
+            // Refresh the prompts list after deleting
+            loadPrompts()
         }
     })
 }
 
 onMounted(() => {
-    axios.get(route('prompts.index')).then((response) => {
-        prompts.value = response.data
-    })
+    loadPrompts()
 })
 </script>
 
 <template>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 p-4">
         <div class="flex justify-between">
-            <div class="flex flex-col">
-                <h3 class="text-xl font-bold">Prompts</h3>
-                <p class="text-sm text-gray-500">
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight">
+                    Prompts
+                </h2>
+                <p class="text-muted-foreground">
                     Manage your user prompts here
                 </p>
             </div>
@@ -116,7 +139,8 @@ onMounted(() => {
             </Button>
         </div>
 
-        <div class="flex flex-col gap-2" v-if="prompts.length > 0">
+        <div class="flex flex-col gap-2 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border p-2"
+            v-if="prompts.length > 0 || isLoading">
             <Table class="overflow-hidden">
                 <TableHeader>
                     <TableRow>
@@ -127,7 +151,25 @@ onMounted(() => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow v-for="prompt in prompts" :key="prompt.uuid">
+                    <!-- Loading skeleton -->
+                    <TableRow v-if="isLoading" v-for="i in 3" :key="`skeleton-${i}`">
+                        <TableCell>
+                            <Skeleton class="h-4 w-32" />
+                        </TableCell>
+                        <TableCell>
+                            <Skeleton class="h-4 w-48" />
+                        </TableCell>
+                        <TableCell>
+                            <Skeleton class="h-4 w-64" />
+                        </TableCell>
+                        <TableCell class="flex justify-end items-center gap-2">
+                            <Skeleton class="h-8 w-8 rounded" />
+                            <Skeleton class="h-8 w-8 rounded" />
+                        </TableCell>
+                    </TableRow>
+
+                    <!-- Actual prompts -->
+                    <TableRow v-else v-for="prompt in prompts" :key="prompt.uuid">
                         <TableCell class="font-medium">{{ prompt.name }}</TableCell>
                         <TableCell class="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
                             {{ prompt.description }}
@@ -136,13 +178,13 @@ onMounted(() => {
                             {{ route('api.generate-with-ai', { prompt: prompt.uuid }) }}
                         </TableCell>
                         <TableCell class="flex justify-end items-center gap-2">
-                            <Dialog>
+                            <Dialog v-model:open="isOpenEdit">
                                 <DialogTrigger as-child>
                                     <Button size="icon" variant="secondary" @click="editPrompt(prompt)">
                                         <Pencil />
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent class="sm:max-w-[425px]">
+                                <DialogContent class="sm:max-w-[600px]">
                                     <form @submit.prevent="updatePrompt(prompt.uuid)">
                                         <DialogHeader>
                                             <DialogTitle>Edit Prompt</DialogTitle>
@@ -174,7 +216,6 @@ onMounted(() => {
                                                     <span class="text-red-500 text-xs text-right">
                                                         Let it be null if you want a plain text response.
                                                     </span>
-
                                                 </div>
                                             </div>
                                         </div>
@@ -233,13 +274,23 @@ onMounted(() => {
                         <Label for="name" class="text-right">
                             Name
                         </Label>
-                        <Input id="name" v-model="formPrompt.name" class="col-span-3" />
+                        <div class="col-span-3">
+                            <Input id="name" v-model="formPrompt.name" />
+                            <span class="text-red-500 text-xs text-right" v-if="formPrompt.errors.name">
+                                {{ formPrompt.errors.name }}
+                            </span>
+                        </div>
                     </div>
                     <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="description" class="text-right">
                             Description
                         </Label>
-                        <Textarea id="description" v-model="formPrompt.description" class="col-span-3" />
+                        <div class="col-span-3">
+                            <Textarea id="description" v-model="formPrompt.description" />
+                            <span class="text-red-500 text-xs text-right" v-if="formPrompt.errors.description">
+                                {{ formPrompt.errors.description }}
+                            </span>
+                        </div>
                     </div>
                     <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="description" class="text-right">
@@ -250,6 +301,9 @@ onMounted(() => {
                                 :placeholder="placeholderJsonSchema" />
                             <span class="text-red-500 text-xs text-right">
                                 Let it be null if you want a plain text response.
+                            </span>
+                            <span class="text-red-500 text-xs text-right" v-if="formPrompt.errors.json_schema">
+                                {{ formPrompt.errors.json_schema }}
                             </span>
                         </div>
                     </div>

@@ -24,12 +24,15 @@ import {
 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useForm } from '@inertiajs/vue3'
 import axios from 'axios'
-import { Trash2 } from 'lucide-vue-next';
+import { Clipboard, Trash2 } from 'lucide-vue-next';
 
-const tokens = ref([]);
-const token = ref(null);
+const tokens = ref<any[]>([]);
+const token = ref<string | null>(null);
+const isLoading = ref(true);
+const isSubmitting = ref(false);
 
 const isOpen = ref(false)
 
@@ -37,32 +40,81 @@ const formToken = useForm({
     name: '',
 })
 
-const submitToken = () => {
-    axios.post(route('tokens.store'), {
-        name: formToken.name,
-    }).then((response) => {
-        token.value = response.data
-        formToken.reset()
-    })
+const loadTokens = async () => {
+    isLoading.value = true;
+    try {
+        const response = await axios.get(route('tokens.index'));
+        tokens.value = response.data;
+    } catch (error) {
+        console.error('Error loading tokens:', error);
+    } finally {
+        isLoading.value = false;
+    }
 }
 
-const deleteToken = (id: string) => {
-    router.delete(route('tokens.destroy', { id }))
+const submitToken = async () => {
+    isSubmitting.value = true;
+    try {
+        const response = await axios.post(route('tokens.store'), {
+            name: formToken.name,
+        });
+        token.value = response.data;
+
+        // Refresh tokens list after creating new token
+        await loadTokens();
+
+        // Reset form
+        formToken.reset();
+        formToken.clearErrors();
+    } catch (error) {
+        if (error.response?.data?.errors) {
+            formToken.errors = error.response.data.errors;
+        }
+    } finally {
+        isSubmitting.value = false;
+    }
+}
+
+const deleteToken = async (id: string) => {
+    try {
+        await router.delete(route('tokens.destroy', { id }));
+        // Refresh tokens list after deletion
+        await loadTokens();
+    } catch (error) {
+        console.error('Error deleting token:', error);
+    }
 }
 
 onMounted(() => {
-    axios.get(route('tokens.index')).then((response) => {
-        tokens.value = response.data
-    })
+    loadTokens();
 })
+
+const copied = ref(false);
+const clipboard_errors = ref('');
+const copyToClipboard = async (token: string) => {
+    if (!navigator.clipboard) {
+        clipboard_errors.value = "Your browser doesn't support automatic copy. Copy it manually";
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(token);
+        copied.value = true;
+        setTimeout(() => (copied.value = false), 2000);
+    } catch (e) {
+        console.error('Error copying to clipboard:', e);
+    }
+};
 </script>
 
 <template>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 p-4">
         <div class="flex justify-between">
-            <div class="flex flex-col">
-                <h3 class="text-xl font-bold">Tokens</h3>
-                <p class="text-sm text-gray-500">
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight">
+                    Tokens
+                </h2>
+                <p class="text-muted-foreground">
                     Manage your user tokens here
                 </p>
             </div>
@@ -72,7 +124,54 @@ onMounted(() => {
             </Button>
         </div>
 
-        <div class="flex flex-col gap-2" v-if="tokens.length > 0">
+        <!-- Loading State -->
+        <div v-if="isLoading"
+            class="flex flex-col gap-2 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border p-2">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>
+                            <Skeleton class="h-4 w-8" />
+                        </TableHead>
+                        <TableHead class="w-[100px]">
+                            <Skeleton class="h-4 w-16" />
+                        </TableHead>
+                        <TableHead>
+                            <Skeleton class="h-4 w-20" />
+                        </TableHead>
+                        <TableHead>
+                            <Skeleton class="h-4 w-24" />
+                        </TableHead>
+                        <TableHead class="text-right">
+                            <Skeleton class="h-4 w-16 ml-auto" />
+                        </TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    <TableRow v-for="i in 3" :key="i">
+                        <TableCell>
+                            <Skeleton class="h-4 w-8" />
+                        </TableCell>
+                        <TableCell>
+                            <Skeleton class="h-4 w-24" />
+                        </TableCell>
+                        <TableCell>
+                            <Skeleton class="h-4 w-32" />
+                        </TableCell>
+                        <TableCell>
+                            <Skeleton class="h-4 w-20" />
+                        </TableCell>
+                        <TableCell class="text-right">
+                            <Skeleton class="h-4 w-8 ml-auto" />
+                        </TableCell>
+                    </TableRow>
+                </TableBody>
+            </Table>
+        </div>
+
+        <!-- Tokens Table -->
+        <div v-else-if="tokens.length > 0"
+            class="flex flex-col gap-2 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border p-2">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -128,6 +227,14 @@ onMounted(() => {
                 </TableBody>
             </Table>
         </div>
+
+        <!-- Empty State -->
+        <div v-else class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="text-muted-foreground">
+                <p class="text-lg font-medium">No tokens found</p>
+                <p class="text-sm">Create your first token to get started.</p>
+            </div>
+        </div>
     </div>
 
     <Dialog v-model:open="isOpen">
@@ -144,19 +251,42 @@ onMounted(() => {
                         <Label for="name" class="text-right">
                             Name
                         </Label>
-                        <Input id="name" v-model="formToken.name" class="col-span-3" />
+                        <div class="col-span-3">
+                            <Input id="name" v-model="formToken.name" :disabled="isSubmitting" />
+                            <span class="text-sm text-red-500 col-span-full" v-for="error in formToken.errors.name">
+                                {{ error }}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button type="submit">
-                        Create
+                    <Button type="submit" :disabled="isSubmitting">
+                        {{ isSubmitting ? 'Creating...' : 'Create' }}
                     </Button>
                     <DialogClose>
-                        <Button type="button" variant="outline">Close</Button>
+                        <Button type="button" variant="outline" :disabled="isSubmitting">Close</Button>
                     </DialogClose>
-                    <Input type="text" :value="token" />
                 </DialogFooter>
             </form>
+
+            <div class="grid grid-cols-4 items-center gap-4 border-t pt-4" v-show="token">
+                <Label for="token" class="text-right">
+                    Token
+                </Label>
+                <div class="col-span-3 flex items-center gap-2">
+                    <Input id="token" :value="token" class="col-span-3" readonly />
+                    <Button type="button" @click="copyToClipboard(token || '')" class="cursor-pointer">
+                        {{ copied ? 'Copied!' : 'Copy' }}
+                        <Clipboard />
+                    </Button>
+                </div>
+                <p class="text-sm text-red-500 col-span-full" v-if="token">
+                    Copy before closing this dialog, this token will not be shown again.
+                </p>
+                <p class="text-sm text-red-500 col-span-full" v-if="clipboard_errors">
+                    {{ clipboard_errors }}
+                </p>
+            </div>
         </DialogContent>
     </Dialog>
 </template>
