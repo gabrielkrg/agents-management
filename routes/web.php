@@ -33,6 +33,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('prompts', [PromptController::class, 'store'])->name('prompts.store');
     Route::put('prompts/{prompt}', [PromptController::class, 'update'])->name('prompts.update');
     Route::delete('prompts/{prompt}', [PromptController::class, 'destroy'])->name('prompts.destroy');
+    Route::get('prompts/{prompt}', [PromptController::class, 'getPrompt'])->name('prompts.get');
 });
 
 

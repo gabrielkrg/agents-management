@@ -50,22 +50,19 @@ class PromptController extends Controller
         return redirect()->back()->with('success', 'Prompt deleted successfully');
     }
 
-    public function getPrompt(Prompt $prompt, Request $request)
+    public function getPrompt(Prompt $prompt)
     {
-        return response()->json([
-            'message' => 'success',
-            'content' => $request->content,
-            'prompt' => $prompt->description,
-        ]);
-
-        $request->validate([
-            'content' => 'required|string|max:100000',
-        ]);
+        if ($prompt->user_id !== auth()->user()->id) {
+            return response()->json([
+                'message' => 'Prompt not found',
+            ], 404);
+        }
 
         return response()->json([
             'message' => 'success',
-            'prompt' => $prompt->description,
-            'data' => $request->content,
+            'name' => $prompt->name,
+            'description' => $prompt->description,
+            'json_schema' => $prompt->json_schema,
         ]);
     }
 }

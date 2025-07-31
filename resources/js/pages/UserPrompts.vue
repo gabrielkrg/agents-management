@@ -24,7 +24,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useForm } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2 } from 'lucide-vue-next';
+import { Pencil, Trash2, MessageCircle } from 'lucide-vue-next';
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { ref, onMounted } from 'vue';
@@ -120,6 +120,12 @@ const deletePrompt = (uuid: string) => {
 onMounted(() => {
     loadPrompts()
 })
+
+const emit = defineEmits(['openChat'])
+
+const startChat = (uuid: string) => {
+    emit('openChat', uuid)
+}
 </script>
 
 <template>
@@ -178,9 +184,13 @@ onMounted(() => {
                             {{ route('api.generate-with-ai', { prompt: prompt.uuid }) }}
                         </TableCell>
                         <TableCell class="flex justify-end items-center gap-2">
+                            <Button size="icon" class="cursor-pointer" @click="startChat(prompt.uuid)">
+                                <MessageCircle />
+                            </Button>
                             <Dialog v-model:open="isOpenEdit">
                                 <DialogTrigger as-child>
-                                    <Button size="icon" variant="secondary" @click="editPrompt(prompt)">
+                                    <Button size="icon" variant="secondary" class="cursor-pointer"
+                                        @click="editPrompt(prompt)">
                                         <Pencil />
                                     </Button>
                                 </DialogTrigger>
@@ -231,7 +241,7 @@ onMounted(() => {
 
                             <Dialog>
                                 <DialogTrigger as-child>
-                                    <Button variant="destructive" size="icon">
+                                    <Button variant="destructive" size="icon" class="cursor-pointer">
                                         <Trash2 />
                                     </Button>
                                 </DialogTrigger>
