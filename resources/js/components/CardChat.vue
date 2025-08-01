@@ -147,7 +147,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <AlertDialog>
+      <AlertDialog v-if="messages.length > 0">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger as-child>
