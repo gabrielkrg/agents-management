@@ -26,18 +26,9 @@ class ChatController extends Controller
         return redirect()->back()->with('success', 'Chat created successfully');
     }
 
-    public function delete(Request $request): JsonResponse
+    public function delete(Prompt $prompt): JsonResponse
     {
-        $validated = $request->validate([
-            'prompt_id' => 'required|string|exists:prompts,uuid',
-        ]);
-
-        // Verificar se o prompt pertence ao usuário autenticado
-        $prompt = Prompt::where('uuid', $validated['prompt_id'])
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
-
-        Chat::where('prompt_id', $validated['prompt_id'])->delete();
+        $prompt->chats()->delete();
 
         return response()->json([
             'message' => 'Chats deleted successfully',

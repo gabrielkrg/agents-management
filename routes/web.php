@@ -35,11 +35,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('prompts/{prompt}', [PromptController::class, 'update'])->name('prompts.update');
     Route::delete('prompts/{prompt}', [PromptController::class, 'destroy'])->name('prompts.destroy');
     Route::get('prompts/{prompt}', [PromptController::class, 'getPrompt'])->name('prompts.get');
+
     Route::get('prompts/{prompt}/chats', [PromptController::class, 'getChats'])->name('prompts.chats');
 
     // Chat routes
     Route::post('chats', [ChatController::class, 'store'])->name('chats.store');
-    Route::delete('chats', [ChatController::class, 'delete'])->name('chats.delete');
+    Route::delete('chats/{prompt}', [ChatController::class, 'delete'])->name('chats.delete');
 });
 
 

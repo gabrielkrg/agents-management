@@ -86,6 +86,24 @@
     }
 }
 
+
+.scrollbar-custom {
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--muted);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 10px;
+    }
+}
+
+
 :root {
     --background: hsl(0 0% 100%);
     --foreground: hsl(240 10% 3.9%);

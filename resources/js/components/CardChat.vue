@@ -10,9 +10,12 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Send, X, Loader2 } from 'lucide-vue-next'
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Send, X, Loader2, Eraser } from 'lucide-vue-next'
 import axios from 'axios'
 import { router } from '@inertiajs/vue3'
+import { marked } from 'marked'
 
 const input = ref('')
 const inputLength = computed(() => input.value.trim().length)
@@ -105,6 +108,23 @@ const generateContent = () => {
     })
 }
 
+// Function to safely render markdown
+const renderMarkdown = (text: string) => {
+  try {
+    return marked(text)
+  } catch (error) {
+    console.error('Error parsing markdown:', error)
+    return text
+  }
+}
+
+const deleteChat = () => {
+  axios.delete(route('chats.delete', props.prompt))
+    .then(() => {
+      getChats()
+    })
+}
+
 onMounted(() => {
   getPrompt()
   getChats()
@@ -112,7 +132,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Card class="absolute bottom-10 right-10">
+  <Card class="absolute bottom-5 right-5 scrollbar-custom">
     <CardHeader class=" flex flex-row justify-between">
       <div class="flex items-center space-x-4">
         <div class="flex flex-col gap-2">
@@ -126,11 +146,40 @@ onMounted(() => {
           </p>
         </div>
       </div>
-      <Button size="icon" variant="secondary" class="cursor-pointer rounded-full" @click="emit('close')">
+
+      <AlertDialog>
+        <AlertDialogTrigger as-child>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button size="icon" variant="ghost" class="cursor-pointer rounded-full" type="button">
+                  <Eraser class="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete chat</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this chat.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel class="cursor-pointer">Cancel</AlertDialogCancel>
+            <AlertDialogAction class="cursor-pointer" @click="deleteChat">Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Button size="icon" variant="ghost" class="cursor-pointer rounded-full" @click="emit('close')">
         <X class="w-4 h-4" />
       </Button>
     </CardHeader>
-    <CardContent class="w-[600px] h-[600px] overflow-y-auto">
+    <CardContent class="w-[600px] h-[calc(50vh)] overflow-y-auto">
       <div class="space-y-4">
         <!-- Loading skeleton for messages -->
         <template v-if="loading">
@@ -153,14 +202,14 @@ onMounted(() => {
             'flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm',
             message.role === 'user' ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted',
           )">
-            {{ message.content }}
+            <div v-html="renderMarkdown(message.content)" class="prose prose-sm max-w-none">
+            </div>
           </div>
         </template>
 
         <!-- Waiting skeleton for new message -->
         <div v-if="waiting" class="flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm bg-muted">
           <Skeleton class="h-4 w-32" />
-          <Skeleton class="h-4 w-24" />
         </div>
       </div>
     </CardContent>
