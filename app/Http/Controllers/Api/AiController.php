@@ -15,6 +15,8 @@ class AiController extends Controller
             'content' => 'required|string:max:1000',
         ]);
 
+        $prompt->increment('count_usage');
+
         $requestData = [
             'system_instruction' => [
                 'parts' => [
@@ -73,6 +75,8 @@ class AiController extends Controller
         $request->validate([
             'content' => 'required|string:max:1000',
         ]);
+
+        $prompt->increment('count_usage');
 
         $chats = [];
 

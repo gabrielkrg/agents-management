@@ -36,6 +36,7 @@ interface Prompt {
     name: string;
     description: string;
     json_schema: string | null;
+    count_usage: number;
 }
 
 const prompts = ref<Prompt[]>([]);
@@ -57,7 +58,6 @@ const formPrompt = useForm({
     json_schema: ''
 })
 
-// Function to load prompts
 const loadPrompts = async () => {
     isLoading.value = true
     try {
@@ -75,7 +75,7 @@ const submitPrompt = () => {
         onSuccess: () => {
             isOpen.value = false
             formPrompt.reset()
-            // Refresh the prompts list after creating
+
             loadPrompts()
         }
     })
@@ -108,7 +108,7 @@ const updatePrompt = (uuid: string | null) => {
             editPromptForm.reset()
             isOpenEdit.value = false
             selectedPrompt.value = null
-            // Refresh the prompts list after updating
+
             loadPrompts()
         },
         onError: (errors) => {
@@ -120,7 +120,6 @@ const updatePrompt = (uuid: string | null) => {
 const deletePrompt = (uuid: string) => {
     router.delete(route('prompts.destroy', { prompt: uuid }), {
         onSuccess: () => {
-            // Refresh the prompts list after deleting
             loadPrompts()
         }
     })
@@ -162,7 +161,7 @@ const startChat = (uuid: string) => {
                         <TableHead>Name</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead>Link</TableHead>
-                        <TableHead>UUID</TableHead>
+                        <TableHead>Usage</TableHead>
                         <TableHead class="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -194,7 +193,7 @@ const startChat = (uuid: string) => {
                             {{ route('api.ai', { prompt: prompt.uuid }) }}
                         </TableCell>
                         <TableCell>
-                            {{ prompt.uuid }}
+                            {{ prompt.count_usage }}
                         </TableCell>
                         <TableCell class="flex justify-end items-center gap-2">
                             <Button size="icon" class="cursor-pointer" @click="startChat(prompt.uuid)">
