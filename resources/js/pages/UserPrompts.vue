@@ -141,15 +141,15 @@ const startChat = (uuid: string) => {
         <div class="flex justify-between">
             <div>
                 <h2 class="text-2xl font-bold tracking-tight">
-                    Prompts
+                    Agents
                 </h2>
                 <p class="text-muted-foreground">
-                    Manage your user prompts here
+                    Manage your agents here
                 </p>
             </div>
 
             <Button @click="isOpen = true">
-                Add Prompt
+                Add Agent
             </Button>
         </div>
 
@@ -209,9 +209,9 @@ const startChat = (uuid: string) => {
                                 <DialogContent class="sm:max-w-[600px]">
                                     <form @submit.prevent="updatePrompt(selectedPrompt?.uuid || null)">
                                         <DialogHeader>
-                                            <DialogTitle>Edit Prompt</DialogTitle>
+                                            <DialogTitle>Edit Agent</DialogTitle>
                                             <DialogDescription>
-                                                Edit the prompt here.
+                                                Edit the agent here.
                                             </DialogDescription>
                                         </DialogHeader>
                                         <div class="grid gap-4 py-4">
@@ -259,9 +259,9 @@ const startChat = (uuid: string) => {
                                 </DialogTrigger>
                                 <DialogContent class="sm:max-w-[425px]">
                                     <DialogHeader>
-                                        <DialogTitle>Delete Prompt</DialogTitle>
+                                        <DialogTitle>Delete Agent</DialogTitle>
                                         <DialogDescription>
-                                            Are you sure you want to delete this prompt?
+                                            Are you sure you want to delete this agent?
                                         </DialogDescription>
                                     </DialogHeader>
                                     <DialogFooter>
@@ -286,9 +286,9 @@ const startChat = (uuid: string) => {
         <DialogContent class="sm:max-w-[600px]">
             <form @submit.prevent="submitPrompt">
                 <DialogHeader>
-                    <DialogTitle>Add Prompt</DialogTitle>
+                    <DialogTitle>Add Agent</DialogTitle>
                     <DialogDescription>
-                        Add a new prompt to your account.
+                        Add a new agent to your account.
                     </DialogDescription>
                 </DialogHeader>
                 <div class="grid gap-4 py-4">

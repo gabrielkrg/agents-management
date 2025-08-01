@@ -153,98 +153,100 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Card class="absolute bottom-5 right-5 scrollbar-custom">
-    <CardHeader class=" flex flex-row justify-between">
-      <div class="flex items-center space-x-4">
-        <div class="flex flex-col gap-2">
-          <Skeleton v-if="loading" class="h-4 w-32" />
-          <p v-else class="text-sm font-medium leading-none">
-            {{ prompt?.name }}
-          </p>
-          <Skeleton v-if="loading" class="h-3 w-48" />
-          <p v-else class="text-sm text-muted-foreground line-clamp-2">
-            {{ prompt?.description }}
-          </p>
+  <div class="absolute bottom-0 right-0 p-4 md:w-[600px] w-full h-full">
+    <Card class="w-full max-h-full">
+      <CardHeader class=" flex flex-row justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="flex flex-col gap-2">
+            <Skeleton v-if="loading" class="h-4 w-32" />
+            <p v-else class="text-sm font-medium leading-none">
+              {{ prompt?.name }}
+            </p>
+            <Skeleton v-if="loading" class="h-3 w-48" />
+            <p v-else class="text-sm text-muted-foreground line-clamp-2">
+              {{ prompt?.description }}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <AlertDialog v-if="messages.length > 0">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <AlertDialogTrigger as-child>
-                <Button size="icon" variant="ghost" class="cursor-pointer rounded-full" type="button">
-                  <Eraser class="w-4 h-4" />
-                </Button>
-              </AlertDialogTrigger>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Delete chat</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this chat.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel class="cursor-pointer">Cancel</AlertDialogCancel>
-            <AlertDialogAction class="cursor-pointer" @click="deleteChat">Continue</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <Button size="icon" variant="ghost" class="cursor-pointer rounded-full" @click="emit('close')">
-        <X class="w-4 h-4" />
-      </Button>
-    </CardHeader>
-    <CardContent class="w-[600px] h-[calc(50vh)]">
-      <div class="space-y-4 overflow-y-auto h-full pr-2" ref="chatDiv">
-        <!-- Loading skeleton for messages -->
-        <template v-if="loading">
-          <div v-for="i in 3" :key="`skeleton-${i}`" class="flex w-max max-w-[75%] flex-col gap-2">
-            <Skeleton class="h-4 w-32" />
-            <Skeleton class="h-4 w-48" />
-          </div>
-          <div class="flex w-max max-w-[75%] flex-col gap-2 ml-auto">
-            <Skeleton class="h-4 w-24" />
-          </div>
-          <div v-for="i in 2" :key="`skeleton-agent-${i}`" class="flex w-max max-w-[75%] flex-col gap-2">
-            <Skeleton class="h-4 w-40" />
-            <Skeleton class="h-4 w-36" />
-          </div>
-        </template>
-
-        <!-- Actual messages -->
-        <template v-else>
-          <div v-for="(message, index) in messages" :key="index" :class="cn(
-            'flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm',
-            message.role === 'user' ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted',
-          )">
-            <div v-html="renderMarkdown(message.content)"
-              class="prose prose-sm max-w-none overflow-x-auto scrollbar-custom">
-            </div>
-          </div>
-        </template>
-
-        <!-- Waiting skeleton for new message -->
-        <div v-if="waiting" class="flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm bg-muted">
-          <Skeleton class="h-4 w-32" />
-        </div>
-      </div>
-    </CardContent>
-    <CardFooter>
-      <form class="flex w-full items-center space-x-2" @submit.prevent="sendMessage">
-        <Input v-model="input" placeholder="Type a message..." class="flex-1" :disabled="loading" />
-        <Button class="p-2.5 flex items-center justify-center" :disabled="inputLength === 0 || waiting || loading"
-          type="submit">
-          <Loader2 class="w-4 h-4 animate-spin" v-if="waiting" />
-          <Send class="w-4 h-4" />
-          <span class="sr-only">Send</span>
+        <AlertDialog v-if="messages.length > 0">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <AlertDialogTrigger as-child>
+                  <Button size="icon" variant="ghost" class="cursor-pointer rounded-full" type="button">
+                    <Eraser class="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete chat</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete this chat.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel class="cursor-pointer">Cancel</AlertDialogCancel>
+              <AlertDialogAction class="cursor-pointer" @click="deleteChat">Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <Button size="icon" variant="ghost" class="cursor-pointer rounded-full" @click="emit('close')">
+          <X class="w-4 h-4" />
         </Button>
-      </form>
-    </CardFooter>
-  </Card>
+      </CardHeader>
+      <CardContent class="scrollbar-custom">
+        <div class="overflow-y-auto space-y-4 h-[calc(100vh-240px)] pr-4" ref="chatDiv">
+
+          <!-- Loading skeleton for messages -->
+          <template v-if="loading">
+            <div v-for="i in 3" :key="`skeleton-${i}`" class="flex w-max max-w-[75%] flex-col gap-2">
+              <Skeleton class="h-4 w-32" />
+              <Skeleton class="h-4 w-48" />
+            </div>
+            <div class="flex w-max max-w-[75%] flex-col gap-2 ml-auto">
+              <Skeleton class="h-4 w-24" />
+            </div>
+            <div v-for="i in 2" :key="`skeleton-agent-${i}`" class="flex w-max max-w-[75%] flex-col gap-2">
+              <Skeleton class="h-4 w-40" />
+              <Skeleton class="h-4 w-36" />
+            </div>
+          </template>
+
+          <!-- Actual messages -->
+          <template v-else>
+            <div v-for="(message, index) in messages" :key="index" :class="cn(
+              'flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm',
+              message.role === 'user' ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted',
+            )">
+              <div v-html="renderMarkdown(message.content)" class="prose prose-sm max-w-none overflow-x-auto">
+              </div>
+            </div>
+          </template>
+
+          <!-- Waiting skeleton for new message -->
+          <div v-if="waiting" class="flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm bg-muted">
+            <Skeleton class="h-4 w-32" />
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <form class="flex w-full items-center space-x-2" @submit.prevent="sendMessage">
+          <Input v-model="input" placeholder="Type a message..." class="flex-1" :disabled="loading" />
+          <Button class="p-2.5 flex items-center justify-center" :disabled="inputLength === 0 || waiting || loading"
+            type="submit">
+            <Loader2 class="w-4 h-4 animate-spin" v-if="waiting" />
+            <Send class="w-4 h-4" />
+            <span class="sr-only">Send</span>
+          </Button>
+        </form>
+      </CardFooter>
+    </Card>
+  </div>
 </template>
