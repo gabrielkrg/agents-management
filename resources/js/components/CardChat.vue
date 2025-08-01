@@ -201,8 +201,8 @@ onMounted(async () => {
           <X class="w-4 h-4" />
         </Button>
       </CardHeader>
-      <CardContent class="scrollbar-custom">
-        <div class="overflow-y-auto space-y-4 h-[calc(100vh-300px)] pr-4" ref="chatDiv">
+      <CardContent class="scrollbar-custom h-full">
+        <div class="overflow-y-auto space-y-4 h-[calc(100vh-250px)] pr-4" ref="chatDiv">
 
           <!-- Loading skeleton for messages -->
           <template v-if="loading">
