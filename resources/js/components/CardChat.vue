@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -62,6 +62,10 @@ const getChats = () => {
         content: chat.text,
       }))
       loading.value = false
+      // Scroll after data is loaded and DOM is updated
+      nextTick(() => {
+        scrollToBottom(chatDiv.value)
+      })
     })
     .catch((error) => {
       console.log(error)
@@ -94,13 +98,26 @@ const sendMessage = () => {
 
 }
 
+const chatDiv = ref<HTMLDivElement | null>(null);
+
+function scrollToBottom(div: HTMLDivElement | null) {
+  if (!div) {
+    console.log('div is null')
+    return
+  }
+
+  nextTick(() => {
+    div.scrollTop = div.scrollHeight
+  })
+}
+
 const generateContent = () => {
   axios.post(route('api.ai.generate-content', props.prompt), {
     content: input.value,
   })
     .then(() => {
       getChats()
-
+      scrollToBottom(chatDiv.value)
       waiting.value = false
     })
     .catch((error) => {
@@ -125,10 +142,14 @@ const deleteChat = () => {
     })
 }
 
-onMounted(() => {
+onMounted(async () => {
   getPrompt()
   getChats()
-}) 
+
+  // Wait for the next tick to ensure DOM is rendered
+  await nextTick()
+  scrollToBottom(chatDiv.value)
+})
 </script>
 
 <template>
@@ -179,8 +200,8 @@ onMounted(() => {
         <X class="w-4 h-4" />
       </Button>
     </CardHeader>
-    <CardContent class="w-[600px] h-[calc(50vh)] overflow-y-auto">
-      <div class="space-y-4">
+    <CardContent class="w-[600px] h-[calc(50vh)]">
+      <div class="space-y-4 overflow-y-auto h-full pr-2" ref="chatDiv">
         <!-- Loading skeleton for messages -->
         <template v-if="loading">
           <div v-for="i in 3" :key="`skeleton-${i}`" class="flex w-max max-w-[75%] flex-col gap-2">
@@ -202,7 +223,8 @@ onMounted(() => {
             'flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm',
             message.role === 'user' ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted',
           )">
-            <div v-html="renderMarkdown(message.content)" class="prose prose-sm max-w-none">
+            <div v-html="renderMarkdown(message.content)"
+              class="prose prose-sm max-w-none overflow-x-auto scrollbar-custom">
             </div>
           </div>
         </template>
