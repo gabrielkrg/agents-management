@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\PromptController;
+use App\Http\Controllers\ChatController;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -34,10 +35,15 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('prompts/{prompt}', [PromptController::class, 'update'])->name('prompts.update');
     Route::delete('prompts/{prompt}', [PromptController::class, 'destroy'])->name('prompts.destroy');
     Route::get('prompts/{prompt}', [PromptController::class, 'getPrompt'])->name('prompts.get');
+    Route::get('prompts/{prompt}/chats', [PromptController::class, 'getChats'])->name('prompts.chats');
+
+    // Chat routes
+    Route::post('chats', [ChatController::class, 'store'])->name('chats.store');
+    Route::delete('chats', [ChatController::class, 'delete'])->name('chats.delete');
 });
 
 
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
-// require __DIR__ . '/api.php';
+require __DIR__ . '/api.php';

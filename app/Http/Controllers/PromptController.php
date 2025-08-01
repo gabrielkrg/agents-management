@@ -65,4 +65,20 @@ class PromptController extends Controller
             'json_schema' => $prompt->json_schema,
         ]);
     }
+
+    public function getChats(Prompt $prompt): JsonResponse
+    {
+        if ($prompt->user_id !== auth()->user()->id) {
+            return response()->json([
+                'message' => 'Prompt not found',
+            ], 404);
+        }
+
+        $chats = $prompt->chats()->orderBy('created_at', 'asc')->get();
+
+        return response()->json([
+            'message' => 'success',
+            'chats' => $chats,
+        ]);
+    }
 }

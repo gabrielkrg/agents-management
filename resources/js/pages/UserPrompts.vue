@@ -81,7 +81,11 @@ const submitPrompt = () => {
     })
 }
 
+const selectedPrompt = ref<Prompt | null>(null);
+
 const editPrompt = (prompt: any) => {
+    selectedPrompt.value = prompt;
+
     isOpenEdit.value = true
     editPromptForm.name = prompt.name
     editPromptForm.description = prompt.description
@@ -94,11 +98,16 @@ const editPromptForm = useForm({
     json_schema: '',
 })
 
-const updatePrompt = (uuid: string) => {
+const updatePrompt = (uuid: string | null) => {
+    if (!uuid) {
+        return
+    }
+
     editPromptForm.put(route('prompts.update', { prompt: uuid }), {
         onSuccess: () => {
             editPromptForm.reset()
             isOpenEdit.value = false
+            selectedPrompt.value = null
             // Refresh the prompts list after updating
             loadPrompts()
         },
@@ -153,6 +162,7 @@ const startChat = (uuid: string) => {
                         <TableHead>Name</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead>Link</TableHead>
+                        <TableHead>UUID</TableHead>
                         <TableHead class="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -181,7 +191,10 @@ const startChat = (uuid: string) => {
                             {{ prompt.description }}
                         </TableCell>
                         <TableCell>
-                            {{ route('api.generate-with-ai', { prompt: prompt.uuid }) }}
+                            {{ route('api.ai', { prompt: prompt.uuid }) }}
+                        </TableCell>
+                        <TableCell>
+                            {{ prompt.uuid }}
                         </TableCell>
                         <TableCell class="flex justify-end items-center gap-2">
                             <Button size="icon" class="cursor-pointer" @click="startChat(prompt.uuid)">
@@ -195,7 +208,7 @@ const startChat = (uuid: string) => {
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent class="sm:max-w-[600px]">
-                                    <form @submit.prevent="updatePrompt(prompt.uuid)">
+                                    <form @submit.prevent="updatePrompt(selectedPrompt?.uuid || null)">
                                         <DialogHeader>
                                             <DialogTitle>Edit Prompt</DialogTitle>
                                             <DialogDescription>
