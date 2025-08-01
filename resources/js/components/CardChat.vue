@@ -153,7 +153,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="absolute bottom-0 right-0 p-4 md:w-[600px] w-full h-full">
+  <div class="fixed bottom-0 right-0 p-4 md:w-[600px] w-full h-full flex items-end">
     <Card class="w-full max-h-full">
       <CardHeader class=" flex flex-row justify-between">
         <div class="flex items-center space-x-4">
@@ -202,7 +202,7 @@ onMounted(async () => {
         </Button>
       </CardHeader>
       <CardContent class="scrollbar-custom">
-        <div class="overflow-y-auto space-y-4 h-[calc(100vh-240px)] pr-4" ref="chatDiv">
+        <div class="overflow-y-auto space-y-4 h-[calc(100vh-300px)] pr-4" ref="chatDiv">
 
           <!-- Loading skeleton for messages -->
           <template v-if="loading">
