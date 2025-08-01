@@ -148,20 +148,20 @@ onMounted(() => {
       </div>
 
       <AlertDialog>
-        <AlertDialogTrigger as-child>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger as-child>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <AlertDialogTrigger as-child>
                 <Button size="icon" variant="ghost" class="cursor-pointer rounded-full" type="button">
                   <Eraser class="w-4 h-4" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete chat</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </AlertDialogTrigger>
+              </AlertDialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Delete chat</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this chat?</AlertDialogTitle>
