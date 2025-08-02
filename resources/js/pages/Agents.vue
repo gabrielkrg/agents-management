@@ -280,6 +280,14 @@ const startChat = (uuid: string) => {
                 </TableBody>
             </Table>
         </div>
+
+        <!-- Empty State -->
+        <div v-else class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="text-muted-foreground">
+                <p class="text-lg font-medium">No agents found</p>
+                <p class="text-sm">Create your first agent to get started.</p>
+            </div>
+        </div>
     </div>
 
     <Dialog v-model:open="isOpen">

@@ -2,10 +2,10 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import UserPrompts from './UserPrompts.vue';
-import UserTokens from './UserTokens.vue';
+import Tokens from './Tokens.vue';
 import CardChat from '@/components/CardChat.vue';
 import { ref } from 'vue';
+import Agents from './Agents.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -33,8 +33,8 @@ const selectChat = (uuid: string) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
-            <UserPrompts @openChat="selectChat" />
-            <UserTokens />
+            <Agents @openChat="selectChat" />
+            <Tokens />
             <CardChat v-if="showChat" :prompt="prompt" @close="showChat = false" />
         </div>
     </AppLayout>
