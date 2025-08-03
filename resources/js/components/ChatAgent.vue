@@ -283,14 +283,14 @@ onMounted(async () => {
             <div class="space-y-2">
               <div v-for="(file, index) in selectedFiles" :key="index"
                 class="flex items-center justify-between p-2 bg-muted rounded-md">
-                <div class="flex items-center space-x-1">
-                  <File class="w-4 h-4 text-muted-foreground" />
+                <div class="flex items-center px-2">
                   <div class="flex flex-wrap gap-1 items-end">
                     <span class="text-sm font-medium">{{ file.name }}</span>
                     <span class="text-xs text-muted-foreground">({{ formatFileSize(file.size) }})</span>
                   </div>
                 </div>
-                <Button size="icon" variant="ghost" class="h-6 w-6 cursor-pointer" @click="removeFile(index)">
+                <Button size="icon" variant="ghost" class="h-6 w-6 cursor-pointer" type="button"
+                  @click="removeFile(index)">
                   <X class="w-3 h-3" />
                 </Button>
               </div>
@@ -298,30 +298,12 @@ onMounted(async () => {
           </div>
 
           <div class="flex w-full items-center space-x-2">
-            <Popover>
-              <PopoverTrigger as-child>
-                <Button size="icon" class="cursor-pointer">
-                  <Plus class="w-4 h-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-80" :align="'start'">
-                <div class="space-y-2">
-                  <Label for="file-upload" class="text-sm font-medium">Attach file</Label>
-                  <div class="flex items-center space-x-2">
-                    <input id="file-upload" ref="fileInput" type="file" class="hidden" @change="handleFileUpload"
-                      accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                    <Button variant="outline" size="sm" class="w-full justify-start" @click="$refs.fileInput?.click()">
-                      <File class="w-4 h-4 mr-2" />
-                      Select file
-                    </Button>
-                  </div>
-                  <p class="text-xs text-muted-foreground">
-                    Supported formats: TXT, PDF, DOC, DOCX, JPG, PNG
-                  </p>
-                </div>
-              </PopoverContent>
-            </Popover>
-
+            <input id="file-upload" ref="fileInput" type="file" class="hidden" @change="handleFileUpload"
+              accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png" />
+            <Button variant="outline" class="cursor-pointer" size="icon" type="button"
+              @click="$refs.fileInput?.click()">
+              <File class="w-4 h-4" />
+            </Button>
             <Input v-model="input" placeholder="Type a message..." class="flex-1" :disabled="loading" />
             <Button class="p-2.5 flex items-center justify-center rounded-l-md"
               :disabled="inputLength === 0 || waiting || loading" type="submit">
