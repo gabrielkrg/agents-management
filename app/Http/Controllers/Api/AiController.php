@@ -13,6 +13,7 @@ class AiController extends Controller
     {
         $request->validate([
             'content' => 'required|string:max:1000',
+            'files' => 'nullable|array',
         ]);
 
         $prompt->increment('count_usage');
@@ -57,6 +58,7 @@ class AiController extends Controller
             'Content-Type' => 'application/json',
         ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', $requestData);
 
+
         $responseData = $response->json();
 
         $responseData = $responseData['candidates'][0]['content']['parts'][0]['text'];
@@ -73,7 +75,8 @@ class AiController extends Controller
     public function generateContent(Prompt $prompt, Request $request)
     {
         $request->validate([
-            'content' => 'required|string:max:1000',
+            'content' => 'required|string|max:1000',
+            'files.*' => 'required|file|max:10240', // 10MB max por arquivo
         ]);
 
         $prompt->increment('count_usage');
@@ -86,6 +89,40 @@ class AiController extends Controller
                 'parts' => [
                     [
                         'text' => $chat->text
+                    ]
+                ]
+            ];
+        }
+
+        $files = $request->file('files');
+
+        if ($files) {
+
+            //    'inline_data' => [
+            //                     'mime_type' => 'application/pdf',
+            //                     'data' => $base64Pdf
+            //                 ]
+
+            $inlineData = [];
+
+            foreach ($files as $file) {
+                $fileContent = $file->get();
+                $base64File = base64_encode($fileContent);
+
+                $inlineData[] = [
+                    'inline_data' => [
+                        'mime_type' => $file->getMimeType(),
+                        'data' => $base64File
+                    ]
+                ];
+            }
+
+            $chats[] = [
+                'role' => 'user',
+                'parts' => [
+                    $inlineData,
+                    [
+                        'text' => $request->content
                     ]
                 ]
             ];

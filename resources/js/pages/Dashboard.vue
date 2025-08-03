@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import Tokens from './Tokens.vue';
-import CardChat from '@/components/CardChat.vue';
+import Chat from '@/components/Chat.vue';
 import { ref } from 'vue';
 import Agents from './Agents.vue';
 
@@ -35,7 +35,7 @@ const selectChat = (uuid: string) => {
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
             <Agents @openChat="selectChat" />
             <Tokens />
-            <CardChat v-if="showChat" :prompt="prompt" @close="showChat = false" />
+            <Chat v-if="showChat" :prompt="prompt" @close="showChat = false" />
         </div>
     </AppLayout>
 </template>
