@@ -35,14 +35,16 @@ const props = defineProps<{
 
 const emit = defineEmits(['close'])
 
-const loading = ref(true)
 const prompt = ref<{
   name: string
   description: string
   json_schema: any
 } | null>(null)
 
+const loading = ref(true)
 const waiting = ref(false);
+
+const chatDiv = ref<HTMLDivElement | null>(null);
 
 const getPrompt = () => {
   axios.get(route('prompts.get', props.prompt))
@@ -63,6 +65,7 @@ const getChats = () => {
         role: chat.role === 'user' ? 'user' : 'agent',
         content: chat.text,
       }))
+
       loading.value = false
       // Scroll after data is loaded and DOM is updated
       nextTick(() => {
@@ -78,8 +81,6 @@ const getChats = () => {
 const sendMessage = () => {
   if (inputLength.value === 0 || !props.prompt) return
 
-  waiting.value = true
-
   // Salvar mensagem do usuário
   router.post(route('chats.store'), {
     prompt_id: props.prompt,
@@ -88,6 +89,8 @@ const sendMessage = () => {
   }, {
     onSuccess: () => {
       getChats()
+      scrollToBottom(chatDiv.value)
+
       generateContent()
     },
     onError: (error) => {
@@ -99,27 +102,12 @@ const sendMessage = () => {
   })
 }
 
-const chatDiv = ref<HTMLDivElement | null>(null);
-
-function scrollToBottom(div: HTMLDivElement | null) {
-  if (!div) {
-    console.log('div is null')
-    return
-  }
-
-  nextTick(() => {
-    div.scrollTop = div.scrollHeight
-  })
-}
-
 const generateContent = () => {
-  console.log(selectedFiles.value);
+  waiting.value = true
 
-  // Criar FormData para enviar arquivos
   const formData = new FormData();
   formData.append('content', input.value);
 
-  // Adicionar cada arquivo ao FormData
   selectedFiles.value.forEach((file, index) => {
     formData.append(`files[${index}]`, file);
   });
@@ -128,14 +116,21 @@ const generateContent = () => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+  }).then((response) => {
+    waiting.value = false
+
+    getChats()
+    scrollToBottom(chatDiv.value)
+
+  }).catch((error) => {
+    console.log(error)
   })
+}
+
+const deleteChat = () => {
+  axios.delete(route('chats.delete', props.prompt))
     .then(() => {
       getChats()
-      scrollToBottom(chatDiv.value)
-      waiting.value = false
-    })
-    .catch((error) => {
-      console.log(error)
     })
 }
 
@@ -149,15 +144,18 @@ const renderMarkdown = (text: string) => {
   }
 }
 
-const deleteChat = () => {
-  axios.delete(route('chats.delete', props.prompt))
-    .then(() => {
-      getChats()
-    })
+const scrollToBottom = (div: HTMLDivElement | null) => {
+  if (!div) {
+    console.log('div is null')
+    return
+  }
+
+  nextTick(() => {
+    div.scrollTop = div.scrollHeight
+  })
 }
 
 const fileInput = ref<HTMLInputElement>()
-
 const selectedFiles = ref<File[]>([])
 
 const handleFileUpload = (event: Event) => {

@@ -75,14 +75,12 @@ class AiController extends Controller
     public function generateContent(Prompt $prompt, Request $request)
     {
         $request->validate([
-            'content' => 'required|string|max:1000',
-            'files.*' => 'required|file|max:10240', // 10MB max por arquivo
+            'content' => 'required|string|max:10000',
+            'files.*' => 'required|file|max:10240',
         ]);
 
-        $prompt->increment('count_usage');
-
+        // load chats from prompt
         $chats = [];
-
         foreach ($prompt->chats as $chat) {
             $chats[] = [
                 'role' => $chat->role,
@@ -94,15 +92,9 @@ class AiController extends Controller
             ];
         }
 
+        // add files to request to the last chat
         $files = $request->file('files');
-
         if ($files) {
-
-            //    'inline_data' => [
-            //                     'mime_type' => 'application/pdf',
-            //                     'data' => $base64Pdf
-            //                 ]
-
             $inlineData = [];
 
             foreach ($files as $file) {
@@ -117,15 +109,9 @@ class AiController extends Controller
                 ];
             }
 
-            $chats[] = [
-                'role' => 'user',
-                'parts' => [
-                    $inlineData,
-                    [
-                        'text' => $request->content
-                    ]
-                ]
-            ];
+            $lastIndex = count($chats) - 1;
+
+            $chats[$lastIndex]['parts'][] = $inlineData;
         }
 
         $requestData = [
@@ -139,6 +125,8 @@ class AiController extends Controller
             'contents' => $chats
         ];
 
+
+        // add json schema to request
         if ($prompt->json_schema) {
             $json_schema_config = [
                 'response_mime_type' => 'application/json',
@@ -155,14 +143,18 @@ class AiController extends Controller
             $requestData['generation_config'] = $json_schema_config;
         }
 
-        $response = Http::withHeaders([
-            'x-goog-api-key' => env('GEMINI_API_KEY'),
-            'Content-Type' => 'application/json',
-        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', $requestData);
+        try {
+            $response = Http::withHeaders([
+                'x-goog-api-key' => env('GEMINI_API_KEY'),
+                'Content-Type' => 'application/json',
+            ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', $requestData);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
 
-        $responseData = $response->json();
-
-        $responseData = $responseData['candidates'][0]['content']['parts'][0]['text'];
+        $responseData = $response->json()['candidates'][0]['content']['parts'][0]['text'];
 
         if ($prompt->json_schema) {
             $parsedData = json_decode($responseData, true);
@@ -175,6 +167,8 @@ class AiController extends Controller
             'text' => $responseData,
             'prompt_id' => $prompt->id,
         ]);
+
+        $prompt->increment('count_usage');
 
         return response()->json($parsedData);
     }
