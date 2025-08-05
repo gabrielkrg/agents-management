@@ -63,7 +63,6 @@ class PromptController extends Controller
             'name' => $prompt->name,
             'description' => $prompt->description,
             'json_schema' => $prompt->json_schema,
-            'files' => $prompt->files,
         ]);
     }
 
