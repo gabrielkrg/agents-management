@@ -30,4 +30,9 @@ class Prompt extends Model
     {
         return $this->hasMany(Chat::class, 'prompt_id', 'uuid');
     }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(File::class, 'prompt_uuid', 'uuid');
+    }
 }

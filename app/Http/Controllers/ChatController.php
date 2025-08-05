@@ -17,10 +17,6 @@ class ChatController extends Controller
             'text' => 'required|string',
         ]);
 
-        Prompt::where('uuid', $validated['prompt_id'])
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
-
         Chat::create($validated);
 
         return redirect()->back()->with('success', 'Chat created successfully');

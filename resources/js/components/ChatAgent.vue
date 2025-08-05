@@ -12,22 +12,10 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Send, X, Loader2, Eraser, Plus, File } from 'lucide-vue-next'
+import { Send, X, Loader2, Eraser, File } from 'lucide-vue-next'
 import axios from 'axios'
 import { router } from '@inertiajs/vue3'
 import { marked } from 'marked'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Label } from '@/components/ui/label'
-
-const input = ref('')
-const inputLength = computed(() => input.value.trim().length)
-
-const messages = ref([
-  { role: 'agent', content: 'Hi, how can I help you today?' },
-  { role: 'user', content: 'Hey, I\'m having trouble with my account.' },
-  { role: 'agent', content: 'What seems to be the problem?' },
-  { role: 'user', content: 'I can\'t log in.' },
-])
 
 const props = defineProps<{
   prompt?: string
@@ -35,21 +23,39 @@ const props = defineProps<{
 
 const emit = defineEmits(['close'])
 
+const input = ref('')
+const inputLength = computed(() => input.value.trim().length)
+const loading = ref(true)
+const waiting = ref(false);
+const chatDiv = ref<HTMLDivElement | null>(null);
+
+const messages = ref<{
+  role: 'user' | 'agent'
+  content: string
+}[]>([]);
+
 const prompt = ref<{
   name: string
   description: string
   json_schema: any
+  files: Array<{
+    id: number
+    name: string
+    path: string
+    mime_type: string
+    size: number
+  }>
 } | null>(null)
-
-const loading = ref(true)
-const waiting = ref(false);
-
-const chatDiv = ref<HTMLDivElement | null>(null);
 
 const getPrompt = () => {
   axios.get(route('prompts.get', props.prompt))
     .then((response) => {
       prompt.value = response.data
+
+      // Carregar arquivos existentes do prompt
+      if (response.data.files && response.data.files.length > 0) {
+        loadExistingFiles(response.data.files)
+      }
     })
     .catch((error) => {
       console.log(error)
@@ -67,7 +73,7 @@ const getChats = () => {
       }))
 
       loading.value = false
-      // Scroll after data is loaded and DOM is updated
+
       nextTick(() => {
         scrollToBottom(chatDiv.value)
       })
@@ -81,7 +87,6 @@ const getChats = () => {
 const sendMessage = () => {
   if (inputLength.value === 0 || !props.prompt) return
 
-  // Salvar mensagem do usuário
   router.post(route('chats.store'), {
     prompt_id: props.prompt,
     role: 'user',
@@ -90,6 +95,8 @@ const sendMessage = () => {
     onSuccess: () => {
       getChats()
       scrollToBottom(chatDiv.value)
+
+      attachFiles()
 
       generateContent()
     },
@@ -155,6 +162,66 @@ const scrollToBottom = (div: HTMLDivElement | null) => {
   })
 }
 
+const loadExistingFiles = async (files: any[]) => {
+  for (const fileData of files) {
+    try {
+      // Fazer download do arquivo
+      const response = await axios.get(`/storage/${fileData.path}`, {
+        responseType: 'blob'
+      })
+
+      // Criar File object a partir do blob
+      const file = new (window as any).File([response.data], fileData.name)
+
+        // Adicionar propriedades customizadas para identificar arquivos existentes
+        ; (file as any).isExisting = true
+        ; (file as any).fileId = fileData.id
+
+      selectedFiles.value.push(file)
+    } catch (error) {
+      console.error('Erro ao carregar arquivo:', fileData.name, error)
+    }
+  }
+}
+
+const attachFiles = () => {
+  if (!props.prompt) return
+
+  const formData = new FormData();
+
+  // Adicionar novos arquivos
+  selectedFiles.value.forEach((file, index) => {
+    if (!(file as any).isExisting) {
+      formData.append(`files[${index}]`, file);
+    }
+  });
+
+  // Adicionar IDs dos arquivos existentes que devem permanecer
+  const existingFileIds = selectedFiles.value
+    .filter(file => (file as any).isExisting)
+    .map(file => (file as any).fileId);
+
+  existingFileIds.forEach((id, index) => {
+    formData.append(`existing_files[${index}]`, id.toString());
+  });
+
+  axios.post(route('prompts.attach-files', props.prompt), formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }).then((response) => {
+    console.log(response)
+    // Atualizar a lista de arquivos com a resposta do servidor
+    if (response.data.files) {
+      // Limpar arquivos existentes e recarregar
+      selectedFiles.value = selectedFiles.value.filter(file => !(file as any).isExisting)
+      loadExistingFiles(response.data.files)
+    }
+  }).catch((error) => {
+    console.log(error)
+  })
+}
+
 const fileInput = ref<HTMLInputElement>()
 const selectedFiles = ref<File[]>([])
 
@@ -171,6 +238,12 @@ const handleFileUpload = (event: Event) => {
 
 const removeFile = (index: number) => {
   selectedFiles.value.splice(index, 1)
+}
+
+const handleFileButtonClick = () => {
+  if (fileInput.value) {
+    fileInput.value.click()
+  }
 }
 
 const formatFileSize = (bytes: number) => {
@@ -297,15 +370,16 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div class="flex w-full items-center space-x-2">
-            <input id="file-upload" ref="fileInput" type="file" class="hidden" @change="handleFileUpload"
-              accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png" />
-            <Button variant="outline" class="cursor-pointer" size="icon" type="button"
-              @click="$refs.fileInput?.click()">
+          <input id="file-upload" ref="fileInput" type="file" class="hidden" @change="handleFileUpload"
+            accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png" />
+          <div class="flex w-full items-center">
+            <Button variant="outline" class="cursor-pointer rounded-full mr-2" size="icon" type="button"
+              @click="handleFileButtonClick">
               <File class="w-4 h-4" />
             </Button>
-            <Input v-model="input" placeholder="Type a message..." class="flex-1" :disabled="loading" />
-            <Button class="p-2.5 flex items-center justify-center rounded-l-md"
+            <Input v-model="input" placeholder="Type a message..." class="flex-1 rounded-full rounded-r-none"
+              :disabled="loading" />
+            <Button class="p-2.5 flex items-center justify-center rounded-full rounded-l-none"
               :disabled="inputLength === 0 || waiting || loading" type="submit">
               <Loader2 class="w-4 h-4 animate-spin" v-if="waiting" />
               <Send class="w-4 h-4" />

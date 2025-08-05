@@ -44,6 +44,12 @@ const isLoading = ref(true)
 const isOpen = ref(false)
 const isOpenEdit = ref(false)
 
+const emit = defineEmits(['openChat'])
+
+const startChat = (prompt: Prompt) => {
+    emit('openChat', prompt)
+}
+
 const placeholderJsonSchema = `{
    "name": { "type": "STRING" },
     "ingredients": {
@@ -128,12 +134,6 @@ const deletePrompt = (uuid: string) => {
 onMounted(() => {
     loadPrompts()
 })
-
-const emit = defineEmits(['openChat'])
-
-const startChat = (uuid: string) => {
-    emit('openChat', uuid)
-}
 </script>
 
 <template>

@@ -37,6 +37,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('prompts/{prompt}', [PromptController::class, 'getPrompt'])->name('prompts.get');
 
     Route::get('prompts/{prompt}/chats', [PromptController::class, 'getChats'])->name('prompts.chats');
+    Route::post('prompts/{prompt}/attach-files', [PromptController::class, 'attachFiles'])->name('prompts.attach-files');
 
     // Chat routes
     Route::post('chats', [ChatController::class, 'store'])->name('chats.store');
