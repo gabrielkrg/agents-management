@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick } from 'vue'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Send, X, Loader2, Eraser, File } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { computed, ref, onMounted, nextTick } from 'vue'
+import { cn } from '@/lib/utils'
 import axios from 'axios'
 import { router } from '@inertiajs/vue3'
 import { marked } from 'marked'
@@ -23,10 +23,12 @@ const props = defineProps<{
 
 const emit = defineEmits(['close'])
 
-const input = ref('')
-const inputLength = computed(() => input.value.trim().length)
-const loading = ref(true)
+const input = ref('');
+const inputLength = computed(() => input.value.trim().length);
+
+const loading = ref(true);
 const waiting = ref(false);
+
 const chatDiv = ref<HTMLDivElement | null>(null);
 
 const messages = ref<{
@@ -45,14 +47,14 @@ const prompt = ref<{
     mime_type: string
     size: number
   }>
-} | null>(null)
+} | null>(null);
 
 const getPrompt = () => {
   axios.get(route('prompts.get', props.prompt))
     .then((response) => {
       prompt.value = response.data
 
-      // Carregar arquivos existentes do prompt
+      // Load existing files from prompt
       if (response.data.files && response.data.files.length > 0) {
         loadExistingFiles(response.data.files)
       }
@@ -352,13 +354,13 @@ onMounted(async () => {
         <form @submit.prevent="sendMessage" class="flex flex-col gap-2 w-full">
           <!-- Selected files -->
           <div v-if="selectedFiles.length > 0" class="mt-3 space-y-2">
-            <div class="text-sm font-medium text-muted-foreground">Attachments:</div>
+            <div class="text-sm font-medium text-muted-foreground">Attachments</div>
             <div class="space-y-2">
               <div v-for="(file, index) in selectedFiles" :key="index"
-                class="flex items-center justify-between p-2 bg-muted rounded-md">
+                class="flex items-center justify-between p-1 bg-input/30 border border-input rounded-md">
                 <div class="flex items-center px-2">
                   <div class="flex flex-wrap gap-1 items-end">
-                    <span class="text-sm font-medium">{{ file.name }}</span>
+                    <span class="text-sm font-normal">{{ file.name }}</span>
                     <span class="text-xs text-muted-foreground">({{ formatFileSize(file.size) }})</span>
                   </div>
                 </div>
@@ -372,14 +374,12 @@ onMounted(async () => {
 
           <input id="file-upload" ref="fileInput" type="file" class="hidden" @change="handleFileUpload"
             accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png" />
-          <div class="flex w-full items-center">
-            <Button variant="outline" class="cursor-pointer rounded-full mr-2" size="icon" type="button"
-              @click="handleFileButtonClick">
+          <div class="flex w-full items-center space-x-2">
+            <Button class="cursor-pointer rounded-md" size="icon" type="button" @click="handleFileButtonClick">
               <File class="w-4 h-4" />
             </Button>
-            <Input v-model="input" placeholder="Type a message..." class="flex-1 rounded-full rounded-r-none"
-              :disabled="loading" />
-            <Button class="p-2.5 flex items-center justify-center rounded-full rounded-l-none"
+            <Input v-model="input" placeholder="Type a message..." class="flex-1 rounded-md" :disabled="loading" />
+            <Button class="p-2.5 flex items-center justify-center rounded-md"
               :disabled="inputLength === 0 || waiting || loading" type="submit">
               <Loader2 class="w-4 h-4 animate-spin" v-if="waiting" />
               <Send class="w-4 h-4" />
@@ -387,8 +387,6 @@ onMounted(async () => {
             </Button>
           </div>
         </form>
-
-
       </CardFooter>
     </Card>
   </div>
