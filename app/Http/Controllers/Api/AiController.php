@@ -58,7 +58,6 @@ class AiController extends Controller
             'Content-Type' => 'application/json',
         ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', $requestData);
 
-
         $responseData = $response->json();
 
         $responseData = $responseData['candidates'][0]['content']['parts'][0]['text'];
