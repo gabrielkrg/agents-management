@@ -21,13 +21,20 @@ class AiController extends Controller
 
         $jsonSchema = $prompt->json_schema ? json_decode($prompt->json_schema, true) : null;
 
-        $parsedData = ProcessAiRequest::dispatchSync(
-            $prompt,
-            $request->content,
-            $jsonSchema
-        );
+        try {
+            // Despacha o job para a fila (aparecerá no Horizon/banco de dados)
+            ProcessAiRequest::dispatch($prompt, $request->content, $jsonSchema);
 
-        return response()->json($parsedData);
+            // Executa o job de forma síncrona para obter o resultado imediatamente
+            $job = new ProcessAiRequest($prompt, $request->content, $jsonSchema);
+            $parsedData = $job->handle();
+
+            return response()->json($parsedData);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function generateContent(Prompt $prompt, Request $request)

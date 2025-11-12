@@ -19,13 +19,5 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
-    {
-        // Gate::define('viewPulse', function (User $user) {
-        //     // Only allow admin users
-        //     return in_array($user->email, [
-        //         'gabriel@test.com',
-        //     ]);
-        // });
-    }
+    public function boot(): void {}
 }
